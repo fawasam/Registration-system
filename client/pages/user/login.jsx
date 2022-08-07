@@ -10,6 +10,9 @@ import FacebookLogin from "react-facebook-login/dist/facebook-login-render-props
 import { useRouter } from "next/router";
 const Login = () => {
   const router = useRouter();
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [loading, setLoading] = useState(null);
   const [formData, setFormData] = useState({
     email: "",
     password1: "",
@@ -19,54 +22,14 @@ const Login = () => {
   const handleChange = (text) => (e) => {
     setFormData({ ...formData, [text]: e.target.value });
   };
-
-  const sendGoogleToken = (tokenId) => {
-    axios
-      .post(`http://localhost:5000/api/googlelogin`, {
-        idToken: tokenId,
-      })
-      .then((res) => {
-        console.log(res.data);
-        informParent(res);
-      })
-      .catch((error) => {
-        console.log("GOOGLE SIGNIN ERROR", error.response);
-      });
-  };
-  const informParent = (response) => {
-    authenticate(response, () => {
-      isAuth() && isAuth().role === "admin"
-        ? router.push("/admin")
-        : router.push("/");
-    });
-  };
-
-  const sendFacebookToken = (userID, accessToken) => {
-    axios
-      .post(`http://localhost:5000/api/facebooklogin`, {
-        userID,
-        accessToken,
-      })
-      .then((res) => {
-        console.log(res.data);
-        informParent(res);
-      })
-      .catch((error) => {
-        console.log("GOOGLE SIGNIN ERROR", error.response);
-      });
-  };
-  const responseGoogle = (response) => {
-    console.log(response);
-    sendGoogleToken(response.tokenId);
-  };
-
-  const responseFacebook = (response) => {
-    console.log(response);
-    sendFacebookToken(response.userID, response.accessToken);
-  };
+  setTimeout(() => {
+    if (error !== null || success !== null) {
+      setError(null);
+      setSuccess(null);
+    }
+  }, [4000]);
 
   const handleSubmit = (e) => {
-    console.log(process.env.REACT_APP_API_URL);
     e.preventDefault();
     if (email && password1) {
       setFormData({ ...formData, textChange: "Submitting" });
@@ -87,6 +50,7 @@ const Login = () => {
               ? router.push("/admin")
               : router.push("/user/register");
             toast.success(`Hey ${res.data.user.name}, Welcome back!`);
+            setSuccess(`Hey ${res.data.user.name}, Welcome back!`);
           });
         })
         .catch((err) => {
@@ -96,11 +60,12 @@ const Login = () => {
             password1: "",
             textChange: "Sign In",
           });
-          console.log(err.response);
           toast.error(err.response.data.errors);
+          setError(err.response.data.errors);
         });
     } else {
       toast.error("Please fill all fields");
+      setError("Please fill all fields");
     }
   };
   useEffect(() => {
@@ -110,50 +75,20 @@ const Login = () => {
   }, [isAuth]);
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900 flex justify-center">
-      <ToastContainer />
+      {/* <ToastContainer /> */}
       <div className="max-w-screen-xl m-0 sm:m-20 bg-white shadow sm:rounded-lg flex justify-center flex-1">
         <div className="lg:w-1/2 xl:w-5/12 p-6 sm:p-12">
           <div className="mt-12 flex flex-col items-center">
             <h1 className="text-2xl xl:text-3xl font-extrabold">
               Sign In for Congar
             </h1>
+            <br />
+
+            {error && <div className="text-red-400 text-bold">{error}</div>}
+            {success && <div className="text-green-500">{success}</div>}
+
             <div className="w-full flex-1 mt-8 text-indigo-500">
               <div className="flex flex-col items-center">
-                <GoogleLogin
-                  clientId={`${process.env.REACT_APP_GOOGLE_CLIENT}`}
-                  onSuccess={responseGoogle}
-                  onFailure={responseGoogle}
-                  cookiePolicy={"single_host_origin"}
-                  render={(renderProps) => (
-                    <button
-                      onClick={renderProps.onClick}
-                      disabled={renderProps.disabled}
-                      className="w-full max-w-xs font-bold shadow-sm rounded-lg py-3 bg-indigo-100 text-gray-800 flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none hover:shadow focus:shadow-sm focus:shadow-outline"
-                    >
-                      <div className=" p-2 rounded-full ">
-                        <i className="fab fa-google " />
-                      </div>
-                      <span className="ml-4">Sign In with Google</span>
-                    </button>
-                  )}
-                ></GoogleLogin>
-                <FacebookLogin
-                  appId={`${process.env.REACT_APP_FACEBOOK_CLIENT}`}
-                  autoLoad={false}
-                  callback={responseFacebook}
-                  render={(renderProps) => (
-                    <button
-                      onClick={renderProps.onClick}
-                      className="w-full max-w-xs font-bold shadow-sm rounded-lg py-3 bg-indigo-100 text-gray-800 flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none hover:shadow focus:shadow-sm focus:shadow-outline mt-5"
-                    >
-                      <div className=" p-2 rounded-full ">
-                        <i className="fab fa-facebook" />
-                      </div>
-                      <span className="ml-4">Sign In with Facebook</span>
-                    </button>
-                  )}
-                />
-
                 <Link href="/user/register">
                   <a
                     className="w-full max-w-xs font-bold shadow-sm rounded-lg py-3
@@ -161,7 +96,7 @@ const Login = () => {
                     target="_self"
                   >
                     <i className="fas fa-user-plus fa 1x w-6  -ml-2 text-indigo-500" />
-                    <span className="ml-4">Sign Up</span>
+                    <span>Sign Up</span>
                   </a>
                 </Link>
               </div>
@@ -193,13 +128,12 @@ const Login = () => {
                   className="mt-5 tracking-wide font-semibold bg-indigo-500 text-gray-100 w-full py-4 rounded-lg hover:bg-indigo-700 transition-all duration-300 ease-in-out flex items-center justify-center focus:shadow-outline focus:outline-none"
                 >
                   <i className="fas fa-sign-in-alt  w-6  -ml-2" />
-                  <span className="ml-3">Sign In</span>
+                  <span>Sign In</span>
                 </button>
-                <Link
-                  href="/user/password/forget"
-                  className="no-underline hover:underline text-indigo-500 text-md text-right absolute right-0  mt-2"
-                >
-                  <a>Forget password?</a>
+                <Link href="/user/password/forget">
+                  <a className="no-underline hover:underline text-indigo-500 text-md text-right absolute right-0  mt-2">
+                    Forget password?
+                  </a>
                 </Link>
               </form>
             </div>

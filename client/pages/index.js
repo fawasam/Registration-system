@@ -2,7 +2,7 @@ import Head from "next/head";
 import Image from "next/image";
 import { useEffect } from "react";
 import styles from "../styles/Home.module.css";
-import { authenticate, isAuth } from "../utils/auth";
+import { authenticate, isAuth, signout } from "../utils/auth";
 import { useRouter } from "next/router";
 import Link from "next/link";
 export default function Home() {
@@ -13,6 +13,9 @@ export default function Home() {
       router.push("/user/register");
     }
   }, [isAuth]);
+  const handleLogout = () => {
+    signout();
+  };
   return (
     <div className={styles.container}>
       <Head>
@@ -47,6 +50,12 @@ export default function Home() {
           <Link href={"/admin"}>
             <a className={styles.card}>
               <h2>ADMIN &rarr;</h2>
+              <p>Find in-depth information about Next.js features and API.</p>
+            </a>
+          </Link>
+          <Link href={"/"} onClick={handleLogout}>
+            <a className={styles.card}>
+              <h2>Logout &rarr;</h2>
               <p>Find in-depth information about Next.js features and API.</p>
             </a>
           </Link>

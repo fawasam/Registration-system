@@ -1,16 +1,13 @@
-const User = require("../models/authModel");
-const expressJwt = require("express-jwt");
 const _ = require("lodash");
-const { OAuth2Client } = require("google-auth-library");
-// const fetch = require("node-fetch");
-
-const { validationResult } = require("express-validator");
 const jwt = require("jsonwebtoken");
-const expressJWT = require("express-jwt");
 const nodemailer = require("nodemailer");
-
+const User = require("../models/authModel");
+const { validationResult } = require("express-validator");
 const { errorHandler } = require("../helpers/dbErrorHandling");
 
+// @desc    Register new user
+// @route   POST /api/register
+// @access  public
 exports.registerController = (req, res) => {
   const { name, email, password } = req.body;
   const errors = validationResult(req);
@@ -86,7 +83,9 @@ exports.registerController = (req, res) => {
   }
 };
 
-//activtion link
+// @desc    Registered User Activation
+// @route   POST /api/activation
+// @access  private
 exports.activationController = (req, res) => {
   const { token } = req.body;
 
@@ -130,7 +129,9 @@ exports.activationController = (req, res) => {
   }
 };
 
-//signin
+// @desc    Sign in
+// @route   POST /api/login
+// @access  public
 exports.signinController = (req, res) => {
   const { email, password } = req.body;
   const errors = validationResult(req);
@@ -180,6 +181,9 @@ exports.signinController = (req, res) => {
   }
 };
 
+// @desc    Forgot Password
+// @route   POST /api/forgotpassword
+// @access  private
 exports.forgotPasswordController = (req, res) => {
   const { email } = req.body;
   const errors = validationResult(req);
@@ -269,6 +273,9 @@ exports.forgotPasswordController = (req, res) => {
   }
 };
 
+// @desc    Reset password
+// @route   POST /api/forgotpassword
+// @access  private
 exports.resetPasswordController = (req, res) => {
   const { resetPasswordLink, newPassword } = req.body;
 
@@ -324,5 +331,57 @@ exports.resetPasswordController = (req, res) => {
         }
       );
     }
+  }
+};
+
+// @desc    Sign out
+// @route   POST /api/logout
+// @access  private
+exports.logoutController = (req, res) => {
+  const { email, password } = req.body;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const firstError = errors.array().map((error) => error.msg)[0];
+    return res.status(422).json({
+      errors: firstError,
+    });
+  } else {
+    // check if user exist
+    User.findOne({
+      email,
+    }).exec((err, user) => {
+      if (err || !user) {
+        return res.status(400).json({
+          errors: "User with that email does not exist. Please signup",
+        });
+      }
+      // authenticate
+      if (!user.authenticate(password)) {
+        return res.status(400).json({
+          errors: "Email and password do not match",
+        });
+      }
+      // generate a token and send to client
+      const token = jwt.sign(
+        {
+          _id: user._id,
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "7d",
+        }
+      );
+      const { _id, name, email, role } = user;
+
+      return res.json({
+        token,
+        user: {
+          _id,
+          name,
+          email,
+          role,
+        },
+      });
+    });
   }
 };

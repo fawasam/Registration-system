@@ -1,5 +1,4 @@
 import cookie from "js-cookie";
-import { GoogleLogout } from "react-google-login";
 
 // Set in Cookie
 export const setCookie = (key, value) => {
@@ -63,6 +62,7 @@ export const isAuth = () => {
   }
 };
 
+//signout
 export const signout = (next) => {
   removeCookie("token");
   removeLocalStorage("user");

@@ -8,6 +8,9 @@ import Link from "next/link";
 const Register = () => {
   const router = useRouter();
 
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [loading, setLoading] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -15,6 +18,12 @@ const Register = () => {
     password2: "",
     textChange: "Sign Up",
   });
+  setTimeout(() => {
+    if (error !== null || success !== null) {
+      setError(null);
+      setSuccess(null);
+    }
+  }, [4000]);
 
   const { name, email, password1, password2, textChange } = formData;
   const handleChange = (text) => (e) => {
@@ -42,6 +51,7 @@ const Register = () => {
             });
 
             toast.success(res.data.message);
+            setSuccess(res.data.message);
           })
           .catch((err) => {
             setFormData({
@@ -54,12 +64,15 @@ const Register = () => {
             });
             console.log(err.response);
             toast.error(err.response.data.errors);
+            setError(err.response.data.errors);
           });
       } else {
         toast.error("Passwords don't matches");
+        setError("Passwords don't matches");
       }
     } else {
       toast.error("Please fill all fields");
+      setError("Please fill all fields");
     }
   };
   console.log(isAuth());
@@ -71,13 +84,17 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900 flex justify-center">
-      <ToastContainer />
+      {/* <ToastContainer /> */}
       <div className="max-w-screen-xl m-0 sm:m-20 bg-white shadow sm:rounded-lg flex justify-center flex-1">
         <div className="lg:w-1/2 xl:w-5/12 p-6 sm:p-12">
           <div className="mt-12 flex flex-col items-center">
             <h1 className="text-2xl xl:text-3xl font-extrabold">
               Sign Up for Congar
             </h1>
+            <br />
+
+            {error && <div className="text-red-400 text-bold">{error}</div>}
+            {success && <div className="text-green-500">{success}</div>}
 
             <form
               className="w-full flex-1 mt-8 text-indigo-500"
@@ -117,12 +134,12 @@ const Register = () => {
                   className="mt-5 tracking-wide font-semibold bg-indigo-500 text-gray-100 w-full py-4 rounded-lg hover:bg-indigo-700 transition-all duration-300 ease-in-out flex items-center justify-center focus:shadow-outline focus:outline-none"
                 >
                   <i className="fas fa-user-plus fa 1x w-6  -ml-2" />
-                  <span className="ml-3">{textChange}</span>
+                  <span>{textChange}</span>
                 </button>
               </div>
-              <div className="my-12 border-b text-center">
+              <div className="my-8 border-b text-center">
                 <div className="leading-none px-2 inline-block text-sm text-gray-600 tracking-wide font-medium bg-white transform translate-y-1/2">
-                  Or sign with email or social login
+                  Already have a account
                 </div>
               </div>
               <div className="flex flex-col items-center">
@@ -133,7 +150,7 @@ const Register = () => {
                     target="_self"
                   >
                     <i className="fas fa-sign-in-alt fa 1x w-6  -ml-2 text-indigo-500" />
-                    <span className="ml-4">Sign In</span>
+                    <span>Sign In</span>
                   </a>
                 </Link>
               </div>
